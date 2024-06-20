@@ -60,13 +60,29 @@ class DialogflowController extends Controller
         $category = Category::with('products')->find($id);
         if (!$category) {
             return response()->json([
-                'fulfillmentText' => 'Category not found'
+                'fulfillmentText' => 'No se encontró la categoría.'
             ]);
         }
+
+        $responseText = "Información de la categoría:\n";
+        $responseText .= "ID: " . $category->id . "\n";
+        $responseText .= "Nombre: " . $category->name . "\n";
+        $responseText .= "Descripción: " . $category->description . "\n";
+
+        if ($category->products->isNotEmpty()) {
+            $responseText .= "Productos:\n";
+            foreach ($category->products as $product) {
+                $responseText .= "- " . $product->name . " (Cantidad: " . $product->quantity . ")\n";
+            }
+        } else {
+            $responseText .= "No hay productos en esta categoría.\n";
+        }
+
         return response()->json([
-            'fulfillmentText' => $category->toJson()
+            'fulfillmentText' => $responseText
         ]);
     }
+
 
     private function getProductsInCategory($id)
     {
