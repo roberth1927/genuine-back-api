@@ -19,15 +19,19 @@ class DialogflowController extends Controller
         switch ($intentName) {
             case 'GetAllCategories':
                 return $this->getAllCategories();
+
             case 'GetCategoryById':
                 $id = $parameters['id'];
                 return $this->getCategoryById($id);
-            case 'GetProductsInCategory':
-                $id = $parameters['id'];
-                return $this->getProductsInCategory($id);
+
             case 'GetProductCountInCategory':
                 $id = $parameters['id'];
                 return $this->getProductCountInCategory($id);
+
+            case 'GetProductsInCategory':
+                $id = $parameters['id'];
+                return $this->getProductsInCategory($id);
+
             default:
                 return response()->json([
                     'fulfillmentText' => 'Intención no reconocida.'
@@ -43,11 +47,6 @@ class DialogflowController extends Controller
         foreach ($categories as $category) {
             $responseText .= "\nCategoría: " . $category->name . "\n";
             $responseText .= "Descripción: " . $category->description . "\n";
-            $responseText .= "Productos:\n";
-
-            foreach ($category->products as $product) {
-                $responseText .= "- " . $product->name . " (Cantidad: " . $product->quantity . ")\n";
-            }
         }
 
         return response()->json([
@@ -69,20 +68,28 @@ class DialogflowController extends Controller
         $responseText .= "Nombre: " . $category->name . "\n";
         $responseText .= "Descripción: " . $category->description . "\n";
 
-        if ($category->products->isNotEmpty()) {
-            $responseText .= "Productos:\n";
-            foreach ($category->products as $product) {
-                $responseText .= "- " . $product->name . " (Cantidad: " . $product->quantity . ")\n";
-            }
-        } else {
-            $responseText .= "No hay productos en esta categoría.\n";
-        }
-
         return response()->json([
             'fulfillmentText' => $responseText
         ]);
     }
 
+    private function getProductCountInCategory($id)
+    {
+        $category = Category::find($id);
+        if (!$category) {
+            return response()->json([
+                'fulfillmentText' => 'No se encontró la categoría con el ID proporcionado.'
+            ]);
+        }
+
+        $count = $category->products->sum('quantity');
+
+        $responseText = "Número de productos en la categoría " . $category->name . ": " . $count;
+
+        return response()->json([
+            'fulfillmentText' => $responseText
+        ]);
+    }
 
     private function getProductsInCategory($id)
     {
@@ -108,23 +115,7 @@ class DialogflowController extends Controller
         ]);
     }
 
-    private function getProductCountInCategory($id)
-    {
-        $category = Category::find($id);
-        if (!$category) {
-            return response()->json([
-                'fulfillmentText' => 'No se encontró la categoría con el ID proporcionado.'
-            ]);
-        }
 
-        $count = $category->products->sum('quantity');
-
-        $responseText = "Número de productos en la categoría " . $category->name . ": " . $count;
-
-        return response()->json([
-            'fulfillmentText' => $responseText
-        ]);
-    }
 
 
 }
