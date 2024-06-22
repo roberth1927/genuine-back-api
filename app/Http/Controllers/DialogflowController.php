@@ -26,11 +26,13 @@ class DialogflowController extends Controller
 
             case 'GetProductCountInCategory':
                 $id = $parameters['id'];
-                return $this->getProductCountInCategory($id);
+                $categoryName = $parameters['category'] ?? null;
+                return $this->getProductCountInCategory($id, $categoryName);
 
             case 'GetProductsInCategory':
                 $id = $parameters['id'];
-                return $this->getProductsInCategory($id);
+                $categoryName = $parameters['category'] ?? null;
+                return $this->getProductsInCategory($id, $categoryName);
 
             default:
                 return response()->json([
@@ -73,12 +75,21 @@ class DialogflowController extends Controller
         ]);
     }
 
-    private function getProductCountInCategory($id)
+    private function getProductCountInCategory($id = null, $categoryName = null)
     {
-        $category = Category::find($id);
+        if ($id) {
+            $category = Category::find($id);
+        } elseif ($categoryName) {
+            $category = Category::whereName($categoryName)->first();
+        } else {
+            return response()->json([
+                'fulfillmentText' => 'No se proporcionó un ID o un nombre de categoría válido.'
+            ]);
+        }
+
         if (!$category) {
             return response()->json([
-                'fulfillmentText' => 'No se encontró la categoría con el ID proporcionado.'
+                'fulfillmentText' => 'No se encontró la categoría con la información proporcionada.'
             ]);
         }
 
@@ -91,12 +102,22 @@ class DialogflowController extends Controller
         ]);
     }
 
-    private function getProductsInCategory($id)
+    private function getProductsInCategory($id, $categoryName = null)
     {
-        $category = Category::with('products')->find($id);
+        if ($id) {
+            $category = Category::with('products')->find($id);
+        } elseif ($categoryName) {
+            $category = Category::with('products')->whereName($categoryName)->first();
+
+        } else {
+            return response()->json([
+                'fulfillmentText' => 'No se proporcionó un ID o un nombre de categoría válido.'
+            ]);
+        }
+
         if (!$category) {
             return response()->json([
-                'fulfillmentText' => 'No se encontró la categoría con el ID proporcionado.'
+                'fulfillmentText' => 'No se encontró la categoría con la información proporcionada.'
             ]);
         }
 
